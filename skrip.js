@@ -61,9 +61,6 @@ window.showNotification = showNotification;
 window.toggleMobileSidebar = toggleMobileSidebar;
 window.toggleSupervisorStats = toggleSupervisorStats;
 window.showLastTrainingDate = showLastTrainingDate;
-window.openSupervisorSelect = openSupervisorSelect;
-window.closeSupervisorModal = closeSupervisorModal;
-window.selectSupervisor = selectSupervisor;
 
 // Админ
 var adminName = "Раупов Зайниддин Абдураимович";
@@ -87,80 +84,6 @@ function isAdmin() {
 // Состояние админа
 var isAdminLoggedIn = false;
 
-// Функции выбора супервайзера
-function openSupervisorSelect() {
-    var modal = document.getElementById('supervisorModal');
-    var list = document.getElementById('supervisorList');
-    
-    // Подсчитываем статистику для каждого супервайзера
-    var stats = {};
-    supervisors.forEach(function(s) { stats[s.id] = 0; });
-    trainingData.forEach(function(item) {
-        if (item.addedBy && stats[item.addedBy] !== undefined) stats[item.addedBy]++;
-    });
-    
-    var html = '';
-    
-    // Кнопка "Все сотрудники" - показать всех
-    html += '<button class="supervisor-option" onclick="selectSupervisor(\'all\')">';
-    html += '<span><strong>🏠 Все сотрудники</strong></span>';
-    html += '<span class="supervisor-count">' + trainingData.length + '</span>';
-    html += '</button>';
-    
-    // Список супервайзеров
-    supervisors.forEach(function(supervisor) {
-        var count = stats[supervisor.id] || 0;
-        html += '<button class="supervisor-option" onclick="selectSupervisor(\'' + supervisor.id + '\')">';
-        html += '<span><strong>' + supervisor.name + '</strong></span>';
-        html += '<span class="supervisor-count">' + count + '</span>';
-        html += '</button>';
-    });
-    
-    // Кнопка админа
-    html += '<button class="supervisor-option admin" onclick="openAdminLogin(); closeSupervisorModal();">';
-    html += '<span><strong>🔐 Админ-панель</strong></span>';
-    html += '<span class="supervisor-count">👑</span>';
-    html += '</button>';
-    
-    list.innerHTML = html;
-    modal.classList.add('active');
-}
-
-function closeSupervisorModal() {
-    document.getElementById('supervisorModal').classList.remove('active');
-}
-
-function selectSupervisor(supervisorId) {
-    if (supervisorId === 'all') {
-        // Показать всех
-        currentSupervisor = 'all';
-        isAdminLoggedIn = false;
-    } else {
-        currentSupervisor = supervisorId;
-        isAdminLoggedIn = false;
-    }
-    
-    closeSupervisorModal();
-    applyFilters();
-    updateStatsVisibility();
-    updateAdminPanel();
-    updateCurrentUserDisplay();
-    
-    // Показать уведомление
-    if (currentSupervisor === 'all') {
-        showNotification('Показаны все сотрудники');
-    } else {
-        var sup = supervisors.find(function(s) { return s.id === currentSupervisor; });
-        if (sup) {
-            var count = 0;
-            trainingData.forEach(function(item) {
-                if (item.addedBy === currentSupervisor) count++;
-            });
-            showNotification('Фильтр: ' + sup.name + ' (' + count + ' сотрудников)');
-        }
-    }
-}
-    
 // Вход в админ-панель
 function openAdminLogin() {
     document.getElementById('adminLoginModal').classList.add('active');
@@ -1405,9 +1328,5 @@ document.addEventListener('DOMContentLoaded', function() {
 // Запуск после загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
-    // Показываем окно выбора при первой загрузке
-    setTimeout(function() {
-        openSupervisorSelect();
-    }, 500);
 });
 

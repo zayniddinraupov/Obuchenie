@@ -18,11 +18,6 @@
         </div>
         
         <nav class="sidebar-menu">
-            <!-- Выбор себя -->
-            <div class="sidebar-item" onclick="openSupervisorSelect();">
-                <span>👤</span> Выбрать себя
-            </div>
-            
             <!-- Админ-панель -->
             <div class="admin-panel" id="adminPanel">
                 <div class="admin-panel-title">⚙️ Панель админ</div>
@@ -94,7 +89,7 @@
             <header>
                 <div class="header-top">
                     <div class="header-left">
-                        <button class="header-logo" onclick="toggleSidebar(); clearFilters(); window.scrollTo(0,0); openSupervisorSelect();">
+                        <button class="header-logo" onclick="toggleSidebar(); clearFilters(); window.scrollTo(0,0);">
                             <h1>📚 Журнал обучения сотрудников</h1>
                             <p>Мониторинг обучения  Юга-Западного службы</p>
                         </button>
@@ -173,12 +168,6 @@
                         <option value="">-- Выберите сотрудника --</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Кто добавил</label>
-                    <select id="addedBySelect">
-                        <option value="">-- Выберите --</option>
-                    </select>
-                </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
                     <button type="submit" class="btn-save">Сохранить</button>
@@ -216,12 +205,6 @@
                         <option value="">-- Выберите сотрудника --</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Кто добавил</label>
-                    <select id="editAddedBySelect">
-                        <option value="">-- Выберите --</option>
-                    </select>
-                </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" onclick="closeEditModal()">Отмена</button>
                     <button type="submit" class="btn-save">Сохранить изменения</button>
@@ -236,18 +219,6 @@
     
     <!-- Конфигурация Firebase -->
     <script src="firebase-config.js"></script>
-    
-    <!-- Модальное окно выбора супервайзера -->
-    <div class="modal-overlay" id="supervisorModal">
-        <div class="modal">
-            <h2>👤 Выберите себя</h2>
-            <p style="color:#a0a0a0; margin-bottom:20px;">Выберите своё имя из списка:</p>
-            <div class="supervisor-list" id="supervisorList"></div>
-            <div class="modal-buttons">
-                <button type="button" class="btn-cancel" onclick="closeSupervisorModal()">Отмена</button>
-            </div>
-        </div>
-    </div>
     
     <!-- Модальное окно входа админа -->
     <div class="modal-overlay" id="adminLoginModal">
