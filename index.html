@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="stayl.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
     <title>Обучение сотрудников - Журнал</title>
 </head>
 <body>
@@ -88,7 +89,7 @@
             <header>
                 <div class="header-top">
                     <div class="header-left">
-                        <button class="header-logo" onclick="clearFilters(); window.scrollTo(0,0);">
+                        <button class="header-logo" onclick="toggleSidebar(); clearFilters(); window.scrollTo(0,0);">
                             <h1>📚 Журнал обучения сотрудников</h1>
                             <p>Мониторинг обучения  Юга-Западного службы</p>
                         </button>
@@ -122,6 +123,7 @@
                                 <th class="sortable" onclick="sortTable('date')">Дата</th>
                                 <th class="sortable" onclick="sortTable('time')">Время</th>
                                 <th class="sortable" onclick="sortTable('trainer')">Обучивший</th>
+                                <th>Подпись</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -244,6 +246,28 @@
                     <button type="submit" class="btn-save">Войти</button>
                 </div>
             </form>
+        </div>
+    </div>
+    
+    <!-- Модальное окно подписи -->
+    <div class="modal-overlay" id="signModal">
+        <div class="modal" style="max-width:400px;">
+            <h2>✍️ Подпись сотрудника</h2>
+            <p id="signEmployeeName" style="color:#333; margin-bottom:10px; font-weight:600;"></p>
+            <p style="color:#666; margin-bottom:15px; font-size:0.85rem;">Проведите пальцем по полю ниже, чтобы нарисовать подпись:</p>
+            
+            <!-- Canvas для подписи -->
+            <div class="signature-pad">
+                <canvas id="signatureCanvas" width="320" height="150"></canvas>
+                <button type="button" class="clear-sign-btn" onclick="clearSignature()">🗑️ Очистить</button>
+            </div>
+            
+            <p style="color:#888; margin-top:15px; font-size:0.8rem;">После рисования нажмите "Сохранить подпись"</p>
+            
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="closeSignModal()">Отмена</button>
+                <button type="button" class="btn-save" onclick="confirmSignature()">✅ Сохранить подпись</button>
+            </div>
         </div>
     </div>
     

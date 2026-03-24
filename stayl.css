@@ -1114,6 +1114,82 @@ footer span[style*="margin-left"] {
     text-align: right;
 }
 
+/* Стили для электронной подписи */
+.signature-cell {
+    white-space: nowrap;
+}
+
+.sign-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.sign-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.signed-badge {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #047857;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Canvas для подписи */
+.signature-pad {
+    position: relative;
+    background: #fff;
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#signatureCanvas {
+    display: block;
+    cursor: crosshair;
+    background: #fff;
+    touch-action: none;
+}
+
+.clear-sign-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.clear-sign-btn:hover {
+    opacity: 1;
+}
+
+/* Подпись в таблице */
+.signature-preview {
+    width: 80px;
+    height: 30px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
 /* Иконка сворачивания */
 #supervisorStatsToggle {
     font-size: 0.7rem;

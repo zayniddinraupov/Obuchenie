@@ -1,3 +1,4 @@
+
 // Глобальные переменные
 var trainingData = [];
 var trainers = [];
@@ -10,19 +11,22 @@ var actionHistory = []; // История действий
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
     var mainContent = document.querySelector('.main-content');
-    var menuToggle = document.querySelector('.menu-toggle');
     
-    if (sidebar) {
+    if (!sidebar) return;
+    
+    // Определяем какой класс использовать в зависимости от ширины экрана
+    if (window.innerWidth <= 1024) {
+        // Мобильная/планшетная версия
+        sidebar.classList.toggle('mobile-open');
+    } else {
+        // Десктоп версия
         sidebar.classList.toggle('hidden');
         if (mainContent) {
             mainContent.classList.toggle('full-width');
         }
-        if (menuToggle) {
-            menuToggle.style.display = sidebar.classList.contains('hidden') ? 'flex' : 'none';
-        }
     }
 }
-
+    
 function closeSidebarMobile() {
     var sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 1024 && sidebar) {
@@ -54,6 +58,9 @@ window.closeAdminLogin = closeAdminLogin;
 window.logoutAdmin = logoutAdmin;
 window.updateAdminPanel = updateAdminPanel;
 window.showNotification = showNotification;
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.toggleSupervisorStats = toggleSupervisorStats;
+window.showLastTrainingDate = showLastTrainingDate;
 
 // Админ
 var adminName = "Раупов Зайниддин Абдураимович";
@@ -67,6 +74,7 @@ var supervisors = [
 ];
 
 var currentSupervisor = null;
+var signEmployeeId = null; // ID сотрудника для подписи
 
 // Проверка: является ли текущий пользователь админом
 function isAdmin() {
@@ -476,6 +484,218 @@ function toggleMobileSidebar() {
 }
 
 window.toggleMobileSidebar = toggleMobileSidebar;
+
+// Функция просмотра подписи
+function viewSignature(employeeId) {
+    var employee = null;
+    for (var i = 0; i < trainingData.length; i++) {
+        if (trainingData[i].id === employeeId) { employee = trainingData[i]; break; }
+    }
+    
+    if (!employee || !employee.signatureImage) return;
+    
+    var w = window.open("", "Подпись", "width=400,height=250");
+    w.document.write('<html><head><title>Подпись сотрудника</title></head><body style="font-family:Segoe UI;padding:20px;text-align:center;">');
+    w.document.write('<h3>Подпись сотрудника</h3>');
+    w.document.write('<p><strong>' + employee.name + '</strong></p>');
+    w.document.write('<img src="' + employee.signatureImage + '" style="max-width:100%;border:1px solid #ccc;padding:10px;">');
+    w.document.write('<p style="color:#666;margin-top:15px;">Дата: ' + employee.signedAt + '</p>');
+    w.document.write('</body></html>');
+    w.document.close();
+}
+
+// Функции для электронной подписи
+function openSignModal(employeeId) {
+    var employee = null;
+    for (var i = 0; i < trainingData.length; i++) {
+        if (trainingData[i].id === employeeId) { employee = trainingData[i]; break; }
+    }
+    
+    if (!employee) return;
+    
+    // Если уже подписано, показываем info
+    if (employee.signed && employee.signedAt) {
+        var signInfo = employee.signatureImage ? '\nПодпись: (рисунок сохранён)' : '\nПодпись: ' + employee.signature;
+        alert('✅ Уже подписано!\n\nСотрудник: ' + employee.name + signInfo + '\nДата: ' + employee.signedAt);
+        return;
+    }
+    
+    signEmployeeId = employeeId;
+    document.getElementById('signEmployeeName').textContent = 'Сотрудник: ' + employee.name;
+    document.getElementById('signModal').classList.add('active');
+    
+    // Инициализируем canvas после показа модального окна
+    setTimeout(function() {
+        initSignatureCanvas();
+        clearSignature();
+    }, 100);
+}
+
+function closeSignModal() {
+    document.getElementById('signModal').classList.remove('active');
+    signEmployeeId = null;
+}
+
+function confirmSignature() {
+    if (!signatureCanvas) {
+        alert('Ошибка: canvas не найден');
+        return;
+    }
+    
+    // Проверяем, есть ли рисунок
+    var canvasData = signatureCanvas.toDataURL();
+    // Проверяем, что canvas не пустой (просто белый фон)
+    var isEmpty = true;
+    var pixelData = signatureCtx.getImageData(0, 0, signatureCanvas.width, signatureCanvas.height).data;
+    for (var i = 3; i < pixelData.length; i += 4) {
+        if (pixelData[i] > 0) {
+            isEmpty = false;
+            break;
+        }
+    }
+    
+    if (isEmpty) {
+        alert('Пожалуйста, нарисуйте подпись пальцем!');
+        return;
+    }
+    
+    if (!signEmployeeId) return;
+    
+    // Находим сотрудника и обновляем
+    var index = -1;
+    for (var i = 0; i < trainingData.length; i++) {
+        if (trainingData[i].id === signEmployeeId) { index = i; break; }
+    }
+    
+    if (index !== -1) {
+        var now = new Date();
+        var dateStr = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
+        var timeStr = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+        
+        trainingData[index].signed = true;
+        trainingData[index].signature = 'Подпись'; // Текстовая метка
+        trainingData[index].signatureImage = canvasData; // Сохраняем рисунок как base64
+        trainingData[index].signedAt = dateStr + ' ' + timeStr;
+        
+        saveData();
+        applyFilters();
+        
+        closeSignModal();
+        alert('✅ Подпись сохранена!\n\nСотрудник: ' + trainingData[index].name + '\nДата: ' + trainingData[index].signedAt);
+    }
+}
+
+window.openSignModal = openSignModal;
+window.closeSignModal = closeSignModal;
+window.confirmSignature = confirmSignature;
+window.clearSignature = clearSignature;
+window.viewSignature = viewSignature;
+
+// Глобальные переменные для Canvas подписи
+var signatureCanvas, signatureCtx;
+var isDrawing = false;
+var lastX = 0;
+var lastY = 0;
+
+// Инициализация Canvas для подписи
+function initSignatureCanvas() {
+    signatureCanvas = document.getElementById('signatureCanvas');
+    if (!signatureCanvas) return;
+    
+    signatureCtx = signatureCanvas.getContext('2d');
+    signatureCtx.strokeStyle = '#000';
+    signatureCtx.lineWidth = 2;
+    signatureCtx.lineCap = 'round';
+    signatureCtx.lineJoin = 'round';
+    
+    // Обработчики для мыши
+    signatureCanvas.addEventListener('mousedown', startDrawing);
+    signatureCanvas.addEventListener('mousemove', draw);
+    signatureCanvas.addEventListener('mouseup', stopDrawing);
+    signatureCanvas.addEventListener('mouseout', stopDrawing);
+    
+    // Обработчики для касаний (телефон)
+    signatureCanvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        var touch = e.touches[0];
+        var rect = signatureCanvas.getBoundingClientRect();
+        lastX = touch.clientX - rect.left;
+        lastY = touch.clientY - rect.top;
+        isDrawing = true;
+    });
+    
+    signatureCanvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        if (!isDrawing) return;
+        var touch = e.touches[0];
+        var rect = signatureCanvas.getBoundingClientRect();
+        var x = touch.clientX - rect.left;
+        var y = touch.clientY - rect.top;
+        
+        signatureCtx.beginPath();
+        signatureCtx.moveTo(lastX, lastY);
+        signatureCtx.lineTo(x, y);
+        signatureCtx.stroke();
+        
+        lastX = x;
+        lastY = y;
+    });
+    
+    signatureCanvas.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        isDrawing = false;
+    });
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    var rect = signatureCanvas.getBoundingClientRect();
+    lastX = e.clientX - rect.left;
+    lastY = e.clientY - rect.top;
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    var rect = signatureCanvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    
+    signatureCtx.beginPath();
+    signatureCtx.moveTo(lastX, lastY);
+    signatureCtx.lineTo(x, y);
+    signatureCtx.stroke();
+    
+    lastX = x;
+    lastY = y;
+}
+
+function stopDrawing() {
+    isDrawing = false;
+}
+
+function clearSignature() {
+    if (!signatureCanvas) return;
+    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+}
+
+// Функция просмотра подписи
+function viewSignature(employeeId) {
+    var employee = null;
+    for (var i = 0; i < trainingData.length; i++) {
+        if (trainingData[i].id === employeeId) { employee = trainingData[i]; break; }
+    }
+    
+    if (!employee || !employee.signatureImage) return;
+    
+    var w = window.open("", "Подпись", "width=400,height=250");
+    w.document.write('<html><head><title>Подпись сотрудника</title></head><body style="font-family:Segoe UI;padding:20px;text-align:center;">');
+    w.document.write('<h3>Подпись сотрудника</h3>');
+    w.document.write('<p><strong>' + employee.name + '</strong></p>');
+    w.document.write('<img src="' + employee.signatureImage + '" style="max-width:100%;border:1px solid #ccc;padding:10px;">');
+    w.document.write('<p style="color:#666;margin-top:15px;">Дата: ' + employee.signedAt + '</p>');
+    w.document.write('</body></html>');
+    w.document.close();
+}
 
 // Рисование диаграммы
 function drawChart() {
@@ -918,6 +1138,19 @@ function renderTable(data) {
     data.forEach(function(item) {
         var canEditThis = canEdit(item);
         
+        // Определяем статус подписи
+        var signedHtml = '';
+        if (item.signed && item.signedAt) {
+            if (item.signatureImage) {
+                // Показываем изображение подписи
+                signedHtml = '<img src="' + item.signatureImage + '" class="signature-preview" title="Подписано: ' + item.signedAt + '" onclick="viewSignature(\'' + item.id + '\')">';
+            } else {
+                signedHtml = '<span class="signed-badge" title="Подписано: ' + item.signedAt + '">✅ Подписано</span>';
+            }
+        } else {
+            signedHtml = '<button class="sign-btn" onclick="openSignModal(' + item.id + ')" title="Подписать">✍️ Подписать</button>';
+        }
+        
         html += '<tr>';
         html += '<td class="row-number">' + item.id + '</td>';
         html += '<td><strong>' + item.name + '</strong></td>';
@@ -925,6 +1158,7 @@ function renderTable(data) {
         html += '<td class="date-cell">' + item.date + '</td>';
         html += '<td class="time-cell">' + item.time + '</td>';
         html += '<td><span class="trainer-badge">' + item.trainer + '</span></td>';
+        html += '<td class="signature-cell">' + signedHtml + '</td>';
         html += '<td class="actions-cell">';
         
         if (canEditThis) {
@@ -1075,6 +1309,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var supervisorModal = document.getElementById('supervisorModal');
     if (supervisorModal) supervisorModal.addEventListener('click', function(e) { 
         if (e.target === supervisorModal) closeSupervisorModal(); 
+    });
+    
+    // Закрытие модального окна подписи
+    var signModal = document.getElementById('signModal');
+    if (signModal) signModal.addEventListener('click', function(e) { 
+        if (e.target === signModal) closeSignModal(); 
     });
     
     // Форма добавления
