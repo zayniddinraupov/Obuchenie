@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="stayl.css">
+    <title>Обучение сотрудников - Журнал</title>
+</head>
+<body>
+    <!-- Боковая панель -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-header-content">
+                <div class="sidebar-logo">📚 Обучение</div>
+                <div class="sidebar-subtitle">Журнал сотрудников</div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <!-- Админ-панель -->
+            <div class="admin-panel" id="adminPanel">
+                <div class="admin-panel-title">⚙️ Панель админ</div>
+                <div class="sidebar-item" onclick="openAdminLogin();" id="adminLoginBtn" style="display:flex;">
+                    <span>🔐</span> Вход админ
+                </div>
+                <div class="sidebar-item" onclick="logoutAdmin();" id="adminLogoutBtn" style="display:none;">
+                    <span>🚪</span> Выйти
+                </div>
+                <div class="sidebar-item admin-only" onclick="exportToCSV();" style="display:none;">
+                    <span>📥</span> Экспорт Excel
+                </div>
+                <div class="sidebar-item admin-only" onclick="printTable();" style="display:none;">
+                    <span>🖨️</span> Печать
+                </div>
+                <div class="sidebar-item admin-only" onclick="recoverFromFirebase();" style="display:none;">
+                    <span>☁️</span> Восстановить из Firebase
+                </div>
+                <div class="sidebar-item admin-only" onclick="recoverDeletedData();" style="display:none;">
+                    <span>♻️</span> Восстановить
+                </div>
+                <div class="sidebar-item admin-only" onclick="deleteAll();" style="display:none;">
+                    <span>🗑️</span> Удалить всех
+                </div>
+                <div class="sidebar-item admin-only" onclick="showTrash();" style="display:none;">
+                    <span>🗑️</span> Корзина
+                </div>
+                <div class="sidebar-item admin-only" onclick="emptyTrash();" style="display:none;">
+                    <span>🚮</span> Очистить корзину
+                </div>
+                <div class="sidebar-item admin-only" onclick="showHistory();" style="display:none;">
+                    <span>📋</span> История
+                </div>
+            </div>
+        </nav>
+            
+        <div class="sidebar-stats">
+            <div class="sidebar-stats-title">📊 Статистика</div>
+            <div class="sidebar-stat-item">
+                <span class="sidebar-stat-label">Всего сотрудников</span>
+                <span class="sidebar-stat-value" id="statTotal">0</span>
+            </div>
+            <div class="sidebar-stat-item">
+                <span class="sidebar-stat-label">Сегодня обучено</span>
+                <span class="sidebar-stat-value" id="statToday">0</span>
+            </div>
+            <div class="sidebar-stat-item" id="currentUserDisplay" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.1);">
+                <span class="sidebar-stat-label">👤 Вы вошли как:</span>
+                <span class="sidebar-stat-value" id="currentUserName" style="font-size:0.9rem;">-</span>
+            </div>
+        </div>
+        
+        <!-- Статистика супервайзеров -->
+        <div class="sidebar-stats" id="supervisorStatsPanel">
+            <div class="sidebar-stats-title" onclick="toggleSupervisorStats()" style="cursor:pointer;">
+                <span>🏆 Кто обучил</span>
+                <span id="supervisorStatsToggle" style="float:right;">▼</span>
+            </div>
+            <div id="supervisorStatsList"></div>
+        </div>
+    </aside>
+
+    <!-- Кнопка меню для мобильных -->
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()">☰</button>
+    
+    <!-- Основной контент -->
+    <main class="main-content">
+        <div class="container">
+            <header>
+                <div class="header-top">
+                    <div class="header-left">
+                        <button class="header-logo" onclick="clearFilters(); window.scrollTo(0,0);">
+                            <h1>📚 Журнал обучения сотрудников</h1>
+                            <p>Мониторинг обучения  Юга-Западного службы</p>
+                        </button>
+                    </div>
+                </div>
+                <div class="header-toolbar">
+                    <div class="toolbar-item">
+                        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск..." oninput="applyFilters()">
+                    </div>
+                    <div class="toolbar-item">
+                        <label>С:</label>
+                        <input type="date" id="dateFrom" onchange="applyFilters()">
+                    </div>
+                    <div class="toolbar-item">
+                        <label>По:</label>
+                        <input type="date" id="dateTo" onchange="applyFilters()">
+                    </div>
+                    <button class="clear-filter-btn" onclick="clearFilters()">✕</button>
+                </div>
+            </header>
+            
+            <!-- Таблица -->
+            <div class="table-container">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortTable('id')">№</th>
+                                <th class="sortable" onclick="sortTable('name')">Ф.И.О</th>
+                                <th class="sortable" onclick="sortTable('theme')">Тема обучения</th>
+                                <th class="sortable" onclick="sortTable('date')">Дата</th>
+                                <th class="sortable" onclick="sortTable('time')">Время</th>
+                                <th class="sortable" onclick="sortTable('trainer')">Обучивший</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <footer>
+                <span style="color: var(--gray);">sam_veb_razrabotchik</span>
+            </footer>
+        </div>
+    </main>
+    
+    <button class="add-btn" onclick="openModal()">+ Добавить</button>
+    
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2>👤 Добавить сотрудника</h2>
+            <form id="addForm">
+                <div class="form-group">
+                    <label>Ф.И.О сотрудника *</label>
+                    <input type="text" id="employeeName" required placeholder="Введите Ф.И.О">
+                </div>
+                <div class="form-group">
+                    <label>Тема обучения *</label>
+                    <input type="text" id="trainingTheme" required placeholder="Введите тему обучения">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата обучения *</label>
+                        <input type="date" id="trainingDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Время обучения *</label>
+                        <input type="time" id="trainingTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Выберите обучающего сотрудника *</label>
+                    <select id="trainerSelect" required>
+                        <option value="">-- Выберите сотрудника --</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn-save">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="editModalOverlay">
+        <div class="modal">
+            <h2>✏️ Редактировать сотрудника</h2>
+            <form id="editForm">
+                <input type="hidden" id="editEmployeeId">
+                <div class="form-group">
+                    <label>Ф.И.О сотрудника *</label>
+                    <input type="text" id="editEmployeeName" required placeholder="Введите Ф.И.О">
+                </div>
+                <div class="form-group">
+                    <label>Тема обучения *</label>
+                    <input type="text" id="editTrainingTheme" required placeholder="Введите тему обучения">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата обучения *</label>
+                        <input type="date" id="editTrainingDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Время обучения *</label>
+                        <input type="time" id="editTrainingTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Выберите обучающего сотрудника *</label>
+                    <select id="editTrainerSelect" required>
+                        <option value="">-- Выберите сотрудника --</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Отмена</button>
+                    <button type="submit" class="btn-save">Сохранить изменения</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Конфигурация Firebase -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Модальное окно выбора супервайзера -->
+    <div class="modal-overlay" id="supervisorModal">
+        <div class="modal">
+            <h2>👤 Выберите себя</h2>
+            <p style="color:#a0a0a0; margin-bottom:20px;">Выберите своё имя из списка:</p>
+            <div class="supervisor-list" id="supervisorList"></div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="closeSupervisorModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно входа админа -->
+    <div class="modal-overlay" id="adminLoginModal">
+        <div class="modal">
+            <h2>🔐 Вход в админ-панель</h2>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label>Введите код администратора:</label>
+                    <input type="password" id="adminCodeInput" required placeholder="Код" autocomplete="off">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeAdminLogin()">Отмена</button>
+                    <button type="submit" class="btn-save">Войти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="skrip.js"></script>
+</body>
+</html>
