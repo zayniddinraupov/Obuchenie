@@ -61,6 +61,9 @@ window.showNotification = showNotification;
 window.toggleMobileSidebar = toggleMobileSidebar;
 window.toggleSupervisorStats = toggleSupervisorStats;
 window.showLastTrainingDate = showLastTrainingDate;
+window.openSupervisorSelect = openSupervisorSelect;
+window.closeSupervisorModal = closeSupervisorModal;
+window.selectSupervisor = selectSupervisor;
 
 // Админ
 var adminName = "Раупов Зайниддин Абдураимович";
@@ -75,11 +78,6 @@ var supervisors = [
 
 var currentSupervisor = null;
 var signEmployeeId = null; // ID сотрудника для подписи
-var supervisorSignatures = {}; // Подписи супервайзеров
-var supervisorCanvas, supervisorCtx;
-var supervisorIsDrawing = false;
-var supervisorLastX = 0;
-var supervisorLastY = 0;
 
 // Проверка: является ли текущий пользователь админом
 function isAdmin() {
@@ -1407,5 +1405,9 @@ document.addEventListener('DOMContentLoaded', function() {
 // Запуск после загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    // Показываем окно выбора при первой загрузке
+    setTimeout(function() {
+        openSupervisorSelect();
+    }, 500);
 });
 
