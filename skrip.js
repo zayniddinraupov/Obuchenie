@@ -75,6 +75,11 @@ var supervisors = [
 
 var currentSupervisor = null;
 var signEmployeeId = null; // ID сотрудника для подписи
+var supervisorSignatures = {}; // Подписи супервайзеров
+var supervisorCanvas, supervisorCtx;
+var supervisorIsDrawing = false;
+var supervisorLastX = 0;
+var supervisorLastY = 0;
 
 // Проверка: является ли текущий пользователь админом
 function isAdmin() {
@@ -678,25 +683,6 @@ function clearSignature() {
     signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
 }
 
-// Функция просмотра подписи
-function viewSignature(employeeId) {
-    var employee = null;
-    for (var i = 0; i < trainingData.length; i++) {
-        if (trainingData[i].id === employeeId) { employee = trainingData[i]; break; }
-    }
-    
-    if (!employee || !employee.signatureImage) return;
-    
-    var w = window.open("", "Подпись", "width=400,height=250");
-    w.document.write('<html><head><title>Подпись сотрудника</title></head><body style="font-family:Segoe UI;padding:20px;text-align:center;">');
-    w.document.write('<h3>Подпись сотрудника</h3>');
-    w.document.write('<p><strong>' + employee.name + '</strong></p>');
-    w.document.write('<img src="' + employee.signatureImage + '" style="max-width:100%;border:1px solid #ccc;padding:10px;">');
-    w.document.write('<p style="color:#666;margin-top:15px;">Дата: ' + employee.signedAt + '</p>');
-    w.document.write('</body></html>');
-    w.document.close();
-}
-
 // Рисование диаграммы
 function drawChart() {
     var canvas = document.getElementById('trainingChart');
@@ -1157,8 +1143,8 @@ function renderTable(data) {
         html += '<td class="theme-cell">' + item.theme + '</td>';
         html += '<td class="date-cell">' + item.date + '</td>';
         html += '<td class="time-cell">' + item.time + '</td>';
-        html += '<td><span class="trainer-badge">' + item.trainer + '</span></td>';
         html += '<td class="signature-cell">' + signedHtml + '</td>';
+        html += '<td><span class="trainer-badge">' + item.trainer + '</span></td>';
         html += '<td class="actions-cell">';
         
         if (canEditThis) {

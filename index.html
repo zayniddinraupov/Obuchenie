@@ -122,8 +122,8 @@
                                 <th class="sortable" onclick="sortTable('theme')">Тема обучения</th>
                                 <th class="sortable" onclick="sortTable('date')">Дата</th>
                                 <th class="sortable" onclick="sortTable('time')">Время</th>
-                                <th class="sortable" onclick="sortTable('trainer')">Обучивший</th>
                                 <th>Подпись</th>
+                                <th class="sortable" onclick="sortTable('trainer')">Обучивший</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -220,18 +220,6 @@
     <!-- Конфигурация Firebase -->
     <script src="firebase-config.js"></script>
     
-    <!-- Модальное окно выбора супервайзера -->
-    <div class="modal-overlay" id="supervisorModal">
-        <div class="modal">
-            <h2>👤 Выберите себя</h2>
-            <p style="color:#a0a0a0; margin-bottom:20px;">Выберите своё имя из списка:</p>
-            <div class="supervisor-list" id="supervisorList"></div>
-            <div class="modal-buttons">
-                <button type="button" class="btn-cancel" onclick="closeSupervisorModal()">Отмена</button>
-            </div>
-        </div>
-    </div>
-    
     <!-- Модальное окно входа админа -->
     <div class="modal-overlay" id="adminLoginModal">
         <div class="modal">
@@ -249,7 +237,7 @@
         </div>
     </div>
     
-    <!-- Модальное окно подписи -->
+    <!-- Модальное окно подписи сотрудника -->
     <div class="modal-overlay" id="signModal">
         <div class="modal" style="max-width:400px;">
             <h2>✍️ Подпись сотрудника</h2>
