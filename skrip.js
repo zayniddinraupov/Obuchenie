@@ -715,7 +715,6 @@ function openEditModal(id) {
     document.getElementById('editTrainingTime').value = employee.time;
     
     populateTrainerSelect('editTrainerSelect', employee.trainer);
-    populateAddedBySelect('editAddedBySelect', employee.addedBy);
     document.getElementById('editModalOverlay').classList.add('active');
 }
 
@@ -1154,7 +1153,6 @@ async function initializeApp() {
     
     // Показываем данные
     populateTrainerSelect('trainerSelect');
-    populateAddedBySelect('addedBySelect');
     renderTable(trainingData);
     renderSupervisorStatsList();
     updateAdminPanel();
@@ -1211,11 +1209,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var editModalOverlay = document.getElementById('editModalOverlay');
     if (editModalOverlay) editModalOverlay.addEventListener('click', function(e) { 
         if (e.target === editModalOverlay) closeEditModal(); 
-    });
-    
-    var supervisorModal = document.getElementById('supervisorModal');
-    if (supervisorModal) supervisorModal.addEventListener('click', function(e) { 
-        if (e.target === supervisorModal) closeSupervisorModal(); 
     });
     
     // Закрытие модального окна подписи
