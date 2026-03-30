@@ -6,7 +6,44 @@ var currentSort = { column: null, direction: 'asc' };
 var useFirebase = false;
 var isFirebaseConfigured = false;
 var actionHistory = []; // История действий
+var currentSupervisor = null;
 
+// Супервайзеры
+var supervisors = [
+    { id: "supervisor_1", name: "Ахмедов Сардорбек Комилжон ўғли" },
+    { id: "supervisor_2", name: "Ўлмасова Нигина Азизовна" },
+    { id: "supervisor_3", name: "Носиров Жафар Носир ўғли" },
+    { id: "supervisor_4", name: "Начальник службы" }
+];
+
+// ==================== СИСТЕМА ВХОДА ====================
+function checkLogin() {
+    var savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        try {
+            var user = JSON.parse(savedUser);
+            currentUser = user;
+            isLoggedIn = true;
+            applyUserRole(user);
+            return true;
+        } catch (e) {}
+    }
+    return false;
+}
+    
+function applyUserRole(user) {
+    if (user.role === 'admin') {
+        isAdminLoggedIn = true;
+        currentSupervisor = 'all';
+    } else if (user.role === 'supervisor') {
+        isAdminLoggedIn = false;
+        currentSupervisor = user.supervisorId;
+    }
+    updateAdminPanel();
+    updateCurrentUserDisplay();
+    applyFilters();
+}
+    
 // Функция переключения боковой панели
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
@@ -66,19 +103,66 @@ window.showLastTrainingDate = showLastTrainingDate;
 var adminName = "Раупов Зайниддин Абдураимович";
 var adminCode = "3020";
 
-// Супервайзеры
-var supervisors = [
-    { name: "Ахмедов Сардорбек Комилжон ўғли", id: "supervisor_1" },
-    { name: "Ўлмасова Нигина Азизовна", id: "supervisor_2" },
-    { name: "Носиров Жафар Носир ўғли", id: "supervisor_3" }
-];
+// Общий логин и пароль
+var loginUsername = "admin";
+var loginPassword = "3020";
 
-var currentSupervisor = null;
-var signEmployeeId = null; // ID сотрудника для подписи
+// Текущий пользователь
+var currentUser = null;
+var isLoggedIn = false;
 
-// Проверка: является ли текущий пользователь админом
-function isAdmin() {
-    return isAdminLoggedIn;
+// ==================== СИСТЕМА ВХОДА ====================
+function checkLogin() {
+    var savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        try {
+            var user = JSON.parse(savedUser);
+            currentUser = user;
+            isLoggedIn = true;
+            applyUserRole(user);
+            return true;
+        } catch (e) {}
+    }
+    return false;
+}
+    
+function applyUserRole(user) {
+    // После входа через логин - обычный режим (не админ)
+    isAdminLoggedIn = false;
+    currentSupervisor = 'all';
+    updateAdminPanel();
+    updateCurrentUserDisplay();
+    applyFilters();
+}
+
+function login(username, password) {
+    if (username.toLowerCase() === loginUsername.toLowerCase() && password === loginPassword) {
+        currentUser = { username: loginUsername, role: 'admin', name: 'Администратор' };
+        isLoggedIn = true;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        applyUserRole(currentUser);
+        return true;
+    }
+    return false;
+}
+    
+function logout() {
+    currentUser = null;
+    isLoggedIn = false;
+    isAdminLoggedIn = false;
+    currentSupervisor = null;
+    localStorage.removeItem('currentUser');
+    updateAdminPanel();
+    updateCurrentUserDisplay();
+    applyFilters();
+}
+    
+function showLogin() {
+    document.getElementById('loginOverlay').classList.remove('hidden');
+}
+
+function hideLogin() {
+    document.getElementById('loginOverlay').classList.add('hidden');
 }
 
 // Состояние админа
@@ -114,12 +198,9 @@ document.getElementById('adminLoginForm').addEventListener('submit', function(e)
 
 // Выход из админ-панели
 function logoutAdmin() {
-    isAdminLoggedIn = false;
-    currentSupervisor = 'all'; // Возврат к просмотру всех
-    updateAdminPanel();
-    updateCurrentUserDisplay();
-    applyFilters();
-    showNotification('Вы вышли из админ-панели');
+    logout(); // Полный выход из системы
+    showLogin();
+    showNotification('Вы вышли из системы');
 }
 
 // Уведомление
@@ -134,25 +215,21 @@ function updateCurrentUserDisplay() {
     var nameEl = document.getElementById('currentUserName');
     
     if (display && nameEl) {
-        if (isAdminLoggedIn) {
+        if (currentUser) {
             display.style.display = 'block';
-            nameEl.textContent = '👑 Админ';
-            nameEl.style.color = '#f59e0b';
-        } else if (currentSupervisor && currentSupervisor !== 'all') {
-            var sup = supervisors.find(function(s) { return s.id === currentSupervisor; });
-            if (sup) {
-                display.style.display = 'block';
-                nameEl.textContent = sup.name;
-                nameEl.style.color = '#00d9ff';
+            if (isAdminLoggedIn) {
+                nameEl.textContent = '👑 Админ';
+                nameEl.style.color = '#f59e0b';
             } else {
-                display.style.display = 'none';
+                nameEl.textContent = '👤 Пользователь';
+                nameEl.style.color = '#00d9ff';
             }
         } else {
             display.style.display = 'none';
         }
     }
 }
-
+    
 // Обновление отображения админ-панели
 function updateAdminPanel() {
     var loginBtn = document.getElementById('adminLoginBtn');
@@ -174,6 +251,11 @@ function updateAdminPanel() {
     }
 }
     
+// Проверка: админ ли вошёл
+function isAdmin() {
+    return isAdminLoggedIn === true;
+}
+
 // Проверка: может ли редактировать (только админ)
 function canEdit(employee) {
     return isAdmin();
@@ -183,7 +265,8 @@ function canEdit(employee) {
 var defaultTrainers = [
     "Ахмедов Сардорбек Комилжон ўғли",
     "Ўлмасова Нигина Азизовна",
-    "Носиров Жафар Носир ўғли"
+    "Носиров Жафар Носир ўғли",
+    "Начальник службы"
 ];
 
 // Данные по умолчанию (пустой список)
@@ -603,6 +686,44 @@ function clearSignature() {
     if (!signatureCanvas) return;
     signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
 }
+
+// ==================== ТЕМА ОБУЧЕНИЯ ====================
+function showThemeInfo(employeeId) {
+    var employee = null;
+    for (var i = 0; i < trainingData.length; i++) {
+        if (trainingData[i].id === employeeId) { employee = trainingData[i]; break; }
+    }
+    
+    if (!employee) return;
+    
+    var content = document.getElementById('themeModalContent');
+    
+    content.innerHTML = `
+        <div style="text-align:center; padding: 20px 0;">
+            <div style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">📚</div>
+                <h3 style="color: #4338ca; margin-bottom: 10px;">${employee.theme}</h3>
+            </div>
+            
+            <div style="text-align:left; background: var(--bg-card); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <p style="margin-bottom: 10px;"><strong>👤 Сотрудник:</strong> ${employee.name}</p>
+                <p style="margin-bottom: 10px;"><strong>📅 Дата:</strong> ${employee.date}</p>
+                <p style="margin-bottom: 10px;"><strong>⏰ Время:</strong> ${employee.time}</p>
+                <p style="margin-bottom: 10px;"><strong>👨‍🏫 Обучивший:</strong> ${employee.trainer}</p>
+                ${employee.signed ? '<p style="color: #10b981;"><strong>✅ Подписано:</strong> ' + employee.signedAt + '</p>' : '<p style="color: #f59e0b;">⏳ Ещё не подписано</p>'}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('themeModal').classList.add('active');
+}
+
+function closeThemeModal() {
+    document.getElementById('themeModal').classList.remove('active');
+}
+
+window.showThemeInfo = showThemeInfo;
+window.closeThemeModal = closeThemeModal;
 
 // Рисование диаграммы
 function drawChart() {
@@ -1060,7 +1181,7 @@ function renderTable(data) {
         html += '<tr>';
         html += '<td class="row-number">' + item.id + '</td>';
         html += '<td><strong>' + item.name + '</strong></td>';
-        html += '<td class="theme-cell">' + item.theme + '</td>';
+        html += '<td><button class="theme-btn" onclick="showThemeInfo(' + item.id + ')" title="Посмотреть тему обучения">📖 ' + item.theme + '</button></td>';
         html += '<td class="date-cell">' + item.date + '</td>';
         html += '<td class="time-cell">' + item.time + '</td>';
         html += '<td class="signature-cell">' + signedHtml + '</td>';
@@ -1127,6 +1248,47 @@ function initFirebaseCheck() {
     return false;
 }
 
+// ==================== ПЕРЕКЛЮЧЕНИЕ ТЕМЫ ====================
+function toggleTheme() {
+    var html = document.documentElement;
+    var themeToggle = document.getElementById('themeToggle');
+    var themeIcon = document.getElementById('themeIcon');
+    
+    // Проверяем текущую тему
+    var currentTheme = html.getAttribute('data-theme');
+    
+    if (currentTheme === 'dark') {
+        // Переключаем на светлую тему
+        html.setAttribute('data-theme', 'light');
+        localStorage.setItem('appTheme', 'light');
+        if (themeIcon) themeIcon.textContent = '🌙';
+    } else {
+        // Переключаем на тёмную тему
+        html.setAttribute('data-theme', 'dark');
+        localStorage.setItem('appTheme', 'dark');
+        if (themeIcon) themeIcon.textContent = '☀️';
+    }
+}
+
+// Загрузка сохранённой темы
+function loadTheme() {
+    var savedTheme = localStorage.getItem('appTheme');
+    var themeIcon = document.getElementById('themeIcon');
+    
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (themeIcon) themeIcon.textContent = '☀️';
+    } else {
+        // По умолчанию светлая тема
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (themeIcon) themeIcon.textContent = '🌙';
+    }
+}
+
+// Делаем функцию глобальной
+window.toggleTheme = toggleTheme;
+window.loadTheme = loadTheme;
+
 // Инициализация приложения
 async function initializeApp() {
     // Загружаем корзину
@@ -1148,9 +1310,20 @@ async function initializeApp() {
     
     if (trainingData.length === 0) {
         trainingData = getDefaultData();
-        trainers = defaultTrainers.slice();
     }
     
+    // Всегда обновляем список тренеров, добавляя новых из defaultTrainers
+    if (trainers.length === 0) {
+        trainers = defaultTrainers.slice();
+    } else {
+        // Добавляем недостающих тренеров из defaultTrainers
+        defaultTrainers.forEach(function(trainer) {
+            if (trainers.indexOf(trainer) === -1) {
+                trainers.push(trainer);
+            }
+        });
+    }
+            
     // Показываем данные
     populateTrainerSelect('trainerSelect');
     renderTable(trainingData);
@@ -1196,6 +1369,56 @@ async function initializeApp() {
 
 // Обработчики событий
 document.addEventListener('DOMContentLoaded', function() {
+    // Проверка входа
+    loadTheme();
+
+    if (!checkLogin()) {
+        showLogin();
+    }
+    
+    // Обработка формы входа
+    var loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var username = document.getElementById('loginUsername').value.trim();
+            var password = document.getElementById('loginPassword').value;
+            var errorEl = document.getElementById('loginError');
+            
+            if (login(username, password)) {
+                hideLogin();
+                
+                // Загружаем данные из localStorage
+                var localData = localStorage.getItem('trainingData');
+                var localTrainers = localStorage.getItem('trainers');
+                
+                if (localData) {
+                    try { trainingData = JSON.parse(localData); } catch (e) {}
+                }
+                if (localTrainers) {
+                    try { 
+                        trainers = JSON.parse(localTrainers);
+                        // Объединяем с дефолтными тренерами
+                        defaultTrainers.forEach(function(t) {
+                            if (trainers.indexOf(t) === -1) trainers.push(t);
+                        });
+                    } catch (e) {}
+                }
+                
+                // Загружаем историю
+                loadActionHistory();
+                
+                populateTrainerSelect('trainerSelect');
+                applyUserRole(currentUser);
+                updateSidebarStats();
+                renderSupervisorStatsList();
+            } else {
+                errorEl.textContent = 'Неверный логин или пароль';
+                errorEl.classList.add('show');
+            }
+        });
+    }
+    
     // Поиск
     var searchInput = document.getElementById('searchInput');
     if (searchInput) searchInput.addEventListener('input', applyFilters);
@@ -1215,6 +1438,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var signModal = document.getElementById('signModal');
     if (signModal) signModal.addEventListener('click', function(e) { 
         if (e.target === signModal) closeSignModal(); 
+    });
+    
+    // Закрытие модального окна темы
+    var themeModal = document.getElementById('themeModal');
+    if (themeModal) themeModal.addEventListener('click', function(e) { 
+        if (e.target === themeModal) closeThemeModal(); 
     });
     
     // Форма добавления
@@ -1320,6 +1549,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Запуск после загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    // Загружаем сохранённую тему
+    loadTheme();
+
+    // Проверяем, вошёл ли пользователь ранее
+    if (checkLogin()) {
+        // Пользователь уже вошёл - показываем интерфейс
+        initializeApp();
+    } else {
+        // Показываем экран входа
+        showLogin();
+    }
 });
 

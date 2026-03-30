@@ -8,6 +8,29 @@
     <title>Обучение сотрудников - Журнал</title>
 </head>
 <body>
+    <!-- Экран входа -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-logo">📚</div>
+                <h1>Журнал обучения</h1>
+                <p>Юга-Западная служба</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="text" id="loginUsername" required placeholder="Введите логин" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="loginPassword" required placeholder="Введите пароль" autocomplete="off">
+                </div>
+                <button type="submit" class="login-btn">Войти в систему</button>
+            </form>
+            <p class="login-error" id="loginError"></p>
+        </div>
+    </div>
+    
     <!-- Боковая панель -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -15,68 +38,80 @@
                 <div class="sidebar-logo">📚 Обучение</div>
                 <div class="sidebar-subtitle">Журнал сотрудников</div>
             </div>
+            <div class="sidebar-user" id="currentUserDisplay" style="display:none;">
+                <span id="currentUserName">-</span>
+            </div>
+        </div>
+        
+        <!-- Быстрая статистика -->
+        <div class="sidebar-quick-stats">
+            <div class="quick-stat">
+                <span class="quick-stat-icon">👥</span>
+                <div class="quick-stat-info">
+                    <span class="quick-stat-value" id="statTotal">0</span>
+                    <span class="quick-stat-label">Всего</span>
+                </div>
+            </div>
+            <div class="quick-stat">
+                <span class="quick-stat-icon">📅</span>
+                <div class="quick-stat-info">
+                    <span class="quick-stat-value" id="statToday">0</span>
+                    <span class="quick-stat-label">Сегодня</span>
+                </div>
+            </div>
         </div>
         
         <nav class="sidebar-menu">
             <!-- Админ-панель -->
             <div class="admin-panel" id="adminPanel">
-                <div class="admin-panel-title">⚙️ Панель админ</div>
+                <div class="menu-section-title">⚙️ Управление</div>
                 <div class="sidebar-item" onclick="openAdminLogin();" id="adminLoginBtn" style="display:flex;">
                     <span>🔐</span> Вход админ
                 </div>
                 <div class="sidebar-item" onclick="logoutAdmin();" id="adminLogoutBtn" style="display:none;">
                     <span>🚪</span> Выйти
                 </div>
+                
+                <div class="menu-section-title menu-section-admin admin-only" style="display:none;">🔧 Админ-панель</div>
                 <div class="sidebar-item admin-only" onclick="exportToCSV();" style="display:none;">
                     <span>📥</span> Экспорт Excel
                 </div>
                 <div class="sidebar-item admin-only" onclick="printTable();" style="display:none;">
                     <span>🖨️</span> Печать
                 </div>
-                <div class="sidebar-item admin-only" onclick="recoverFromFirebase();" style="display:none;">
-                    <span>☁️</span> Восстановить из Firebase
-                </div>
-                <div class="sidebar-item admin-only" onclick="recoverDeletedData();" style="display:none;">
-                    <span>♻️</span> Восстановить
-                </div>
-                <div class="sidebar-item admin-only" onclick="deleteAll();" style="display:none;">
-                    <span>🗑️</span> Удалить всех
+                <div class="sidebar-item admin-only" onclick="showHistory();" style="display:none;">
+                    <span>📋</span> История
                 </div>
                 <div class="sidebar-item admin-only" onclick="showTrash();" style="display:none;">
                     <span>🗑️</span> Корзина
                 </div>
+                <div class="sidebar-item admin-only" onclick="recoverDeletedData();" style="display:none;">
+                    <span>♻️</span> Восстановить
+                </div>
+                <div class="sidebar-item admin-only" onclick="recoverFromFirebase();" style="display:none;">
+                    <span>☁️</span> Из Firebase
+                </div>
+                <div class="sidebar-item admin-only" onclick="deleteAll();" style="display:none;">
+                    <span>⚠️</span> Удалить всех
+                </div>
                 <div class="sidebar-item admin-only" onclick="emptyTrash();" style="display:none;">
                     <span>🚮</span> Очистить корзину
                 </div>
-                <div class="sidebar-item admin-only" onclick="showHistory();" style="display:none;">
-                    <span>📋</span> История
-                </div>
             </div>
         </nav>
-            
-        <div class="sidebar-stats">
-            <div class="sidebar-stats-title">📊 Статистика</div>
-            <div class="sidebar-stat-item">
-                <span class="sidebar-stat-label">Всего сотрудников</span>
-                <span class="sidebar-stat-value" id="statTotal">0</span>
-            </div>
-            <div class="sidebar-stat-item">
-                <span class="sidebar-stat-label">Сегодня обучено</span>
-                <span class="sidebar-stat-value" id="statToday">0</span>
-            </div>
-            <div class="sidebar-stat-item" id="currentUserDisplay" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.1);">
-                <span class="sidebar-stat-label">👤 Вы вошли как:</span>
-                <span class="sidebar-stat-value" id="currentUserName" style="font-size:0.9rem;">-</span>
-            </div>
-        </div>
         
         <!-- Статистика супервайзеров -->
-        <div class="sidebar-stats" id="supervisorStatsPanel">
-            <div class="sidebar-stats-title" onclick="toggleSupervisorStats()" style="cursor:pointer;">
-                <span>🏆 Кто обучил</span>
-                <span id="supervisorStatsToggle" style="float:right;">▼</span>
+        <div class="sidebar-supervisors">
+            <div class="supervisors-header" onclick="toggleSupervisorStats()">
+                <span>🏆 Статистика обучения</span>
+                <span id="supervisorStatsToggle">▼</span>
             </div>
-            <div id="supervisorStatsList"></div>
+            <div id="supervisorStatsList" class="supervisors-list"></div>
+        </div>
+        
+        <!-- Версия приложения -->
+        <div class="sidebar-footer">
+            <span>v1.0</span>
         </div>
     </aside>
 
@@ -99,6 +134,9 @@
                     <div class="toolbar-item">
                         <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск..." oninput="applyFilters()">
                     </div>
+                    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Переключить тему">
+                        <span id="themeIcon">🌙</span>
+                    </button>
                     <div class="toolbar-item">
                         <label>С:</label>
                         <input type="date" id="dateFrom" onchange="applyFilters()">
@@ -255,6 +293,17 @@
             <div class="modal-buttons">
                 <button type="button" class="btn-cancel" onclick="closeSignModal()">Отмена</button>
                 <button type="button" class="btn-save" onclick="confirmSignature()">✅ Сохранить подпись</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно темы обучения -->
+    <div class="modal-overlay" id="themeModal">
+        <div class="modal" style="max-width:450px;">
+            <h2>📚 Тема обучения</h2>
+            <div id="themeModalContent"></div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-save" onclick="closeThemeModal()">Закрыть</button>
             </div>
         </div>
     </div>
