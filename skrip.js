@@ -3,7 +3,7 @@
 var trainingData = [];
 var trainers = [];
 var currentSort = { column: null, direction: 'asc' };
-var useFirebase = false;
+var useFirebase = true; // Включаем Firebase для синхронизации
 var isFirebaseConfigured = false;
 var actionHistory = []; // История действий
 var currentSupervisor = null;
@@ -1388,30 +1388,55 @@ document.addEventListener('DOMContentLoaded', function() {
             if (login(username, password)) {
                 hideLogin();
                 
-                // Загружаем данные из localStorage
-                var localData = localStorage.getItem('trainingData');
-                var localTrainers = localStorage.getItem('trainers');
-                
-                if (localData) {
-                    try { trainingData = JSON.parse(localData); } catch (e) {}
-                }
-                if (localTrainers) {
-                    try { 
-                        trainers = JSON.parse(localTrainers);
-                        // Объединяем с дефолтными тренерами
-                        defaultTrainers.forEach(function(t) {
-                            if (trainers.indexOf(t) === -1) trainers.push(t);
+                // Инициализируем Firebase
+                var firebaseInit = initFirebaseCheck();
+                if (firebaseInit) {
+                    useFirebase = true;
+                    // Загружаем данные из Firebase
+                    loadDataFromFirebase(function(fbData) {
+                        if (fbData && fbData.length > 0) {
+                            trainingData = fbData;
+                        }
+                        // Загружаем тренеров из Firebase
+                        loadTrainersFromFirebase(function(fbTrainers) {
+                            if (fbTrainers && Array.isArray(fbTrainers)) {
+                                trainers = fbTrainers;
+                            }
+                            // Объединяем с дефолтными тренерами
+                            defaultTrainers.forEach(function(t) {
+                                if (trainers.indexOf(t) === -1) trainers.push(t);
+                            });
+                            
+                            populateTrainerSelect('trainerSelect');
+                            applyUserRole(currentUser);
+                            applyFilters();
+                            updateSidebarStats();
+                            renderSupervisorStatsList();
                         });
-                    } catch (e) {}
+                    });
+                } else {
+                    // Если Firebase не работает - грузим из localStorage
+                    var localData = localStorage.getItem('trainingData');
+                    var localTrainers = localStorage.getItem('trainers');
+                    
+                    if (localData) {
+                        try { trainingData = JSON.parse(localData); } catch (e) {}
+                    }
+                    if (localTrainers) {
+                        try { 
+                            trainers = JSON.parse(localTrainers);
+                            defaultTrainers.forEach(function(t) {
+                                if (trainers.indexOf(t) === -1) trainers.push(t);
+                            });
+                        } catch (e) {}
+                    }
+                    
+                    populateTrainerSelect('trainerSelect');
+                    applyUserRole(currentUser);
+                    applyFilters();
+                    updateSidebarStats();
+                    renderSupervisorStatsList();
                 }
-                
-                // Загружаем историю
-                loadActionHistory();
-                
-                populateTrainerSelect('trainerSelect');
-                applyUserRole(currentUser);
-                updateSidebarStats();
-                renderSupervisorStatsList();
             } else {
                 errorEl.textContent = 'Неверный логин или пароль';
                 errorEl.classList.add('show');
